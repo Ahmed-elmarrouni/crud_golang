@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://localhost:8080';
 
 // Fetch all users
 export const fetchUsers = async () => {
@@ -14,12 +14,12 @@ export const fetchUsers = async () => {
 }
 
 // Create a user
-export const createUser = async (user) => {
+export const addUser = async (user) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/users`)
+        const response = await axios.post(`${API_BASE_URL}/users`, user);
         return response.data;
     } catch (error) {
-        console.error("Err creation user", error)
-        throw error
+        console.error("Err creating user", error);
+        throw error;
     }
-}
+};

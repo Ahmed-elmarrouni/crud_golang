@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/gin-contrib/cors"
 )
 
 type User struct {
@@ -57,13 +60,46 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
+func UpdateUser(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var updateUser User
+	if err := c.ShouldBindJSON(&updateUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		return
+	}
+
+	_, err = conn.Exec(context.Background(),
+		"UPDATE public.users SET name=$1, email=$2 WHERE id=$3",
+		updateUser.Name, updateUser.Email, id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+}
+
 func main() {
 	connectDB()
 
 	r := gin.Default()
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},        // Allow requests from your frontend
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"}, // Allowed HTTP methods
+		AllowHeaders:     []string{"Content-Type"},                 // Allowed headers
+		AllowCredentials: true,
+	}))
+
 	r.GET("/users", GetUsers)
 	r.POST("/users", CreateUser)
+	r.PUT("/users/:id", UpdateUser)
 
 	go func() {
 		fmt.Println(" Server running on http://localhost:8080")

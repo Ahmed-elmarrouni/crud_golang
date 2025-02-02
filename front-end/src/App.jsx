@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Table,
@@ -17,20 +17,41 @@ import {
   Typography,
 } from '@mui/material';
 
-const App = () => {
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Ahmed El Marrouni', email: 'ahmed@gmail.com' },
-    { id: 2, name: 'Med El Marrouni', email: 'med@gmail.com' },
-    { id: 3, name: 'Youssef El Marrouni', email: 'youssef@gmail.com' },
-  ]);
+import { fetchUsers, addUser } from './api';
 
+const App = () => {
+  const [users, setUsers] = useState([]);
   const [open, setOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '' });
   const [editingUser, setEditingUser] = useState(null);
 
-  const handleDelete = (id) => {
-    setUsers(users.filter((user) => user.id !== id));
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      const data = await fetchUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
   };
 
+  const handleAddUser = async () => {
+    try {
+      if (!newUser.name || !newUser.email) {
+        alert("Both Name and Email are required!");
+        return;
+      }
+      await addUser(newUser);
+      setNewUser({ name: '', email: '' });
+      setOpen(false);
+      loadUsers();
+    } catch (error) {
+      console.error('Error adding user:', error);
+    }
+  };
   const handleEditOpen = (user) => {
     setEditingUser(user);
     setOpen(true);
@@ -48,7 +69,11 @@ const App = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditingUser((prev) => ({ ...prev, [name]: value }));
+    if (editingUser) {
+      setEditingUser((prev) => ({ ...prev, [name]: value }));
+    } else {
+      setNewUser((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   return (
@@ -56,7 +81,15 @@ const App = () => {
       <Typography variant="h4" align="center" gutterBottom>
         User Management
       </Typography>
-      <TableContainer component={Paper} style={{ marginTop: 20 }}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => setOpen(true)}
+        style={{ marginBottom: 20 }}
+      >
+        Add User
+      </Button>
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
@@ -84,7 +117,7 @@ const App = () => {
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={() => handleDelete(user.id)}
+                    onClick={() => setUsers(users.filter((u) => u.id !== user.id))}
                   >
                     Delete
                   </Button>
@@ -95,15 +128,15 @@ const App = () => {
         </Table>
       </TableContainer>
 
-      {/* Edit Dialog */}
+      {/* Add/Edit User Dialog */}
       <Dialog open={open} onClose={handleEditClose}>
-        <DialogTitle>Edit User</DialogTitle>
+        <DialogTitle>{editingUser ? 'Edit User' : 'Add User'}</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
             label="Name"
             name="name"
-            value={editingUser?.name || ''}
+            value={editingUser ? editingUser.name : newUser.name}
             onChange={handleInputChange}
             fullWidth
           />
@@ -111,7 +144,7 @@ const App = () => {
             margin="dense"
             label="Email"
             name="email"
-            value={editingUser?.email || ''}
+            value={editingUser ? editingUser.email : newUser.email}
             onChange={handleInputChange}
             fullWidth
           />
@@ -120,8 +153,8 @@ const App = () => {
           <Button onClick={handleEditClose} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleEditSave} color="primary">
-            Save
+          <Button onClick={editingUser ? handleEditSave : handleAddUser} color="primary">
+            {editingUser ? 'Save' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>
