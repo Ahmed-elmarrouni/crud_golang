@@ -85,6 +85,26 @@ func UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
+func DeleteUser(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User di"})
+		return
+	}
+
+	_, err = conn.Exec(context.Background(),
+		"DELETE FROM public.users WHERE id = $1", id,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"err": "Failed to Delete user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+
+}
+
 func main() {
 	connectDB()
 
@@ -100,6 +120,7 @@ func main() {
 	r.GET("/users", GetUsers)
 	r.POST("/users", CreateUser)
 	r.PUT("/users/:id", UpdateUser)
+	r.DELETE("/users/:id", DeleteUser)
 
 	go func() {
 		fmt.Println(" Server running on http://localhost:8080")

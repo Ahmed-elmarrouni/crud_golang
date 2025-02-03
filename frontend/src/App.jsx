@@ -15,15 +15,17 @@ import {
   DialogTitle,
   TextField,
   Typography,
+  Box,
 } from '@mui/material';
-
-import { fetchUsers, addUser } from './api';
+import { fetchUsers, addUser, updateUser, deleteUser } from './api';
 
 const App = () => {
   const [users, setUsers] = useState([]);
   const [open, setOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '' });
   const [editingUser, setEditingUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  // const [deleteTerm, setDeleteTern] = useState('')
 
   useEffect(() => {
     loadUsers();
@@ -39,11 +41,11 @@ const App = () => {
   };
 
   const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email) {
+      alert('Both Name and Email are required!');
+      return;
+    }
     try {
-      if (!newUser.name || !newUser.email) {
-        alert("Both Name and Email are required!");
-        return;
-      }
       await addUser(newUser);
       setNewUser({ name: '', email: '' });
       setOpen(false);
@@ -52,6 +54,7 @@ const App = () => {
       console.error('Error adding user:', error);
     }
   };
+
   const handleEditOpen = (user) => {
     setEditingUser(user);
     setOpen(true);
@@ -62,9 +65,18 @@ const App = () => {
     setEditingUser(null);
   };
 
-  const handleEditSave = () => {
-    setUsers(users.map((user) => (user.id === editingUser.id ? editingUser : user)));
-    handleEditClose();
+  const handleEditSave = async () => {
+    if (!editingUser.name || !editingUser.email) {
+      alert('Both Name and Email are required!');
+      return;
+    }
+    try {
+      await updateUser(editingUser);
+      setOpen(false);
+      loadUsers();
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -76,19 +88,47 @@ const App = () => {
     }
   };
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleDelete = async (userId) => {
+    try {
+      await deleteUser({ id: userId });
+      // setUsers((prevUsers) => prevUsers.filter((user) => user.id !== user.id));
+
+      await deleteUser({ id: userId });
+      loadUsers();
+
+    } catch (error) {
+      console.error('Err deleting user:', error);
+
+    }
+  }
+
   return (
     <Container>
       <Typography variant="h4" align="center" gutterBottom>
         User Management
       </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => setOpen(true)}
-        style={{ marginBottom: 20 }}
-      >
-        Add User
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, marginTop: 40 }}>
+        <Box sx={{ width: 500, maxWidth: '100%' }}>
+          <TextField
+            fullWidth
+            label="Search"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </Box>
+        <Button variant="contained" color="primary" onClick={() => setOpen(true)} style={{ marginBottom: 20 }}>
+          Add User
+        </Button>
+      </div>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -100,24 +140,17 @@ const App = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.id}</TableCell>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleEditOpen(user)}
-                    style={{ marginRight: 10 }}
-                  >
+                  <Button variant="contained" color="primary" onClick={() => handleEditOpen(user)} style={{ marginRight: 10 }}>
                     Edit
                   </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => setUsers(users.filter((u) => u.id !== user.id))}
+                  <Button variant="contained" color="secondary"
+                    onClick={() => handleDelete(user.id)}
                   >
                     Delete
                   </Button>
@@ -127,35 +160,15 @@ const App = () => {
           </TableBody>
         </Table>
       </TableContainer>
-
-      {/* Add/Edit User Dialog */}
       <Dialog open={open} onClose={handleEditClose}>
         <DialogTitle>{editingUser ? 'Edit User' : 'Add User'}</DialogTitle>
         <DialogContent>
-          <TextField
-            margin="dense"
-            label="Name"
-            name="name"
-            value={editingUser ? editingUser.name : newUser.name}
-            onChange={handleInputChange}
-            fullWidth
-          />
-          <TextField
-            margin="dense"
-            label="Email"
-            name="email"
-            value={editingUser ? editingUser.email : newUser.email}
-            onChange={handleInputChange}
-            fullWidth
-          />
+          <TextField margin="dense" label="Name" name="name" value={editingUser ? editingUser.name : newUser.name} onChange={handleInputChange} fullWidth />
+          <TextField margin="dense" label="Email" name="email" value={editingUser ? editingUser.email : newUser.email} onChange={handleInputChange} fullWidth />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleEditClose} color="secondary">
-            Cancel
-          </Button>
-          <Button onClick={editingUser ? handleEditSave : handleAddUser} color="primary">
-            {editingUser ? 'Save' : 'Add'}
-          </Button>
+          <Button onClick={handleEditClose} color="secondary">Cancel</Button>
+          <Button onClick={editingUser ? handleEditSave : handleAddUser} color="primary">{editingUser ? 'Save' : 'Add'}</Button>
         </DialogActions>
       </Dialog>
     </Container>

@@ -23,3 +23,25 @@ export const addUser = async (user) => {
         throw error;
     }
 };
+
+// Update a user
+export const updateUser = async (user) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/users/${user.id}`, user);
+        return response.data;
+    } catch (error) {
+        console.error("Err updating user", error);
+        throw error;
+    }
+}
+
+// Delete User
+export const deleteUser = async (user) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/users/${user.id}`, user);
+        return response.data
+    } catch (error) {
+        console.error("err delleting user", error);
+        throw error
+    }
+}
