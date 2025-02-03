@@ -21,10 +21,11 @@ type User struct {
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
+	ImageUrl  string    `json:"image_url"`
 }
 
 func GetUsers(c *gin.Context) {
-	rows, err := conn.Query(context.Background(), "SELECT id, name, email, created_at FROM public.users")
+	rows, err := conn.Query(context.Background(), "SELECT id, name, email, created_at, image_url FROM public.users")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
 		return
@@ -34,7 +35,7 @@ func GetUsers(c *gin.Context) {
 	var users []User
 	for rows.Next() {
 		var user User
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt)
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.ImageUrl)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 		}
@@ -51,7 +52,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 	_, err := conn.Exec(context.Background(),
-		"INSERT INTO public.users (name, email) VALUES ($1, $2)", newUser.Name, newUser.Email)
+		"INSERT INTO public.users (name, email, image_url) VALUES ($1, $2, $3)", newUser.Name, newUser.Email, newUser.ImageUrl)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
@@ -74,8 +75,8 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	_, err = conn.Exec(context.Background(),
-		"UPDATE public.users SET name=$1, email=$2 WHERE id=$3",
-		updateUser.Name, updateUser.Email, id)
+		"UPDATE public.users SET name=$1, email=$2 , image_url=$3 WHERE id=$4",
+		updateUser.Name, updateUser.Email, updateUser.ImageUrl, id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
