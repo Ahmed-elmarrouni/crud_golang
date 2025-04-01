@@ -185,6 +185,11 @@ const App = () => {
                   >
                     Delete
                   </Button>
+                  <Button variant="contained" color="success" style={{ marginLeft: 10 }}
+                  // onClick={() => handleDelete(user.id)}
+                  >
+                    View
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

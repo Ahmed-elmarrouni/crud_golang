@@ -1,0 +1,7 @@
+%syntax-version=1.0.0
+%project=crud_golang
+
+players 2025-04-01T11:13:08Z Ahmed <ahmedelmarrouni1@gmail.com> # Create players table
+add_columns 2025-04-01T13:37:13Z Ahmed <ahmedelmarrouni1@gmail.com> # Add email and birth_date columns to players
+update_column 2025-04-01T13:38:41Z Ahmed <ahmedelmarrouni1@gmail.com> # Update email column to NOT NULL
+delete_column 2025-04-01T13:40:23Z Ahmed <ahmedelmarrouni1@gmail.com> # Delete birth_date column from players
